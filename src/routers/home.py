@@ -23,7 +23,11 @@ async def get_home(page: int = 1):
     html = scraper.soup(res)
     data = scraper.extract_itens(html)
     return JSONResponse(
-        content={"status": True, "colections": data}
+        content={
+            "status": True, 
+            "colections": data,
+            "total": len(data)
+        }
     )
 
 @router.get("/video/{link:path}", status_code=200)
@@ -38,6 +42,9 @@ async def video(link: str = Path(...)):
     html = scraper.soup(res)
     data = scraper.extract_movie(html)
     return JSONResponse(
-        content={"status": True, "video": data}
+        content={
+            "status": True, 
+            "video": data
+        }
     )
 
