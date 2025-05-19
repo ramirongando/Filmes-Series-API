@@ -1,11 +1,12 @@
-# ComandoPlay API 🎬
+# 📽️ Catálogo de Filmes e Séries - API 🎬
 
-API REST para catálogo de filmes e séries, construída com **FastAPI**, que realiza scraping no site ComandoPlay para disponibilizar dados organizados via endpoints JSON.
+API REST para catálogo de filmes e séries, construída com **FastAPI**, que realiza scraping em fontes públicas online. O objetivo é fornecer uma interface estruturada para consumo de dados de entretenimento organizados via endpoints JSON.
 
 ## 📌 Funcionalidades
 
-- 🔎 Listagem de filmes da página inicial (`/api/movies`)
-- 🎞️ Busca de detalhes de filmes individuais (`/api/video/{link}`)
+- 📄 Listar filmes da página inicial (com paginação)
+- 🔍 Buscar detalhes de um filme por link
+- 📺 Listar séries (em breve)
 - 🚀 Rota raiz com mensagem de boas-vindas (`/`)
 - 🔧 Projeto modular com separação por routers e controllers
 
@@ -13,11 +14,11 @@ API REST para catálogo de filmes e séries, construída com **FastAPI**, que re
 
 ## ⚙️ Tecnologias utilizadas
 
+- Python 3.12+
 - [FastAPI](https://fastapi.tiangolo.com/)
 - [Uvicorn](https://www.uvicorn.org/)
 - [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/)
 - [Requests](https://docs.python-requests.org/)
-- Python 3.8+
 
 ---
 
@@ -27,6 +28,40 @@ API REST para catálogo de filmes e séries, construída com **FastAPI**, que re
 
 ```bash
 git clone https://github.com/ramirongando/Filmes-Series-API.git
-cd Filmes-Series-API
-pip install requirements.txt
+cd Filmes-Series-API 
+```
+
+### 2. Crie e ative um ambiente virtual
+```bash
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate      # Windows
+```
+
+### 3. Instale as dependências
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Rode o servidor
+```bash
 python main.py
+```
+
+---
+
+## 📫 Endpoints
+
+| Método | Rota                    | Descrição                             |
+|--------|-------------------------|---------------------------------------|
+| GET    | `/`                     | Mensagem de boas-vindas               |
+| GET    | `/api/movies?page=1`    | Lista filmes da página inicial        |
+| GET    | `/api/video/{link}`     | Busca detalhes de um filme pelo link  |
+
+---
+
+## 🧑‍💻 Autor
+
+- **Ramiro Ngando** — [@ramirongando](https://github.com/ramirongando)
+
+---
