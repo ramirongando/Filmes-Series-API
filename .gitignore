@@ -1,2 +1,35 @@
-/__pycache__
-/venv
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pdb
+*.egg-info/
+*.egg
+*.log
+
+# Ambiente virtual
+venv/
+.env
+.env.*
+
+# IDEs e editores
+.vscode/
+.idea/
+*.swp
+
+# Testes e cobertura
+.coverage
+htmlcov/
+.tox/
+pytest_cache/
+
+# Arquivos temporários
+*.bak
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Uvicorn reload file
+reload.db
