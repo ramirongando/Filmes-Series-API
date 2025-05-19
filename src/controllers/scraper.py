@@ -8,9 +8,16 @@ from bs4 import BeautifulSoup
 from src.config.config import HEADERS
 
 
+
+def debug(content):
+    with open("index.html", "wt") as file:
+        file.write(content)
+        file.close()
+
 class ComandoPlay:
     def __init__(self):
-        self.result = list()
+        self.filmes = list()
+        self.series = list()
         self.deal = requests.Session()
         self.deal.headers = HEADERS
 
@@ -59,7 +66,7 @@ class ComandoPlay:
                 print("[EXCEPT] Erro ao extrair informações de um item.")
                 continue
         
-        self.result = result.copy()
+        self.filmes = result.copy()
         return result
     
     def extract_movie(self, html: BeautifulSoup) -> list:
@@ -91,4 +98,41 @@ class ComandoPlay:
         })
 
         return result
+
+
+class AssistirBiz(ComandoPlay):
+    def extract_series(self, html: BeautifulSoup) -> list:
+        """Extrai informações de séries da página HTML"""
+        result = []
+        soup = html
+        itens = soup.select("div.catalog > div > div > div")
+        if not itens:
+            print("[ERRO] Verifique os selectores")
+            return []
+        
+        for item in itens:
+            try:
+                title = item.find("h3", attrs={"class": "card__title"}).text.strip()
+                category = item.select("span > a:nth-child(1)")[0].text.strip()
+                serie_data = item.select("span > a:nth-child(2)")[0].text.strip()
+                rank = item.find("span", attrs={"class": "card__rate"}).text.strip()
+                link = item.select("div.card__cover > a")[0]["href"]
+                img_tag = item.find("img")
+                image = img_tag.get("src", "")
+                if not image or "poster_default" in image or "_filter(blur)" in image:
+                    image = img_tag.get("data-src", "https://assistir.biz/assets/img/poster_default.jpg")
+
+                result.append({
+                    "title": title, "data-serie": serie_data, 
+                    "category": category, "link": link, 
+                    "image": image, "rank": rank
+                })
+
+            except AttributeError:
+                print("[EXCEPT] Erro ao extrair informações de um item.")
+                continue
+
+        self.series = result.copy()
+        return result
+
 
