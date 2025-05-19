@@ -64,7 +64,31 @@ class ComandoPlay:
     
     def extract_movie(self, html: BeautifulSoup) -> list:
         soup = html
+        result = []
         multi_element = soup.find(class_="multi")
+        link = multi_element.find_all("a") if multi_element else []
 
-        link = multi_element.find_all("a")
-        return link[0]["href"]
+        def safe_text(selector, attr=None, index=0):
+            try:
+                if attr:
+                    return soup.find(selector[0], selector[1])[attr].strip()
+                elif isinstance(selector, tuple):
+                    return soup.find(selector[0], selector[1]).text.strip()
+                elif selector.startswith("select:"):
+                    sel = soup.select(selector[7:])
+                    return sel[index].text.strip() if len(sel) > index else ""
+            except (AttributeError, IndexError, TypeError):
+                return ""
+
+        result.append({
+            "image": safe_text(("img", {"itemprop": "image"}), attr="src"),
+            "title": safe_text(("h1", {"itemprop": "name"})),
+            "movie-data": safe_text("select:span:nth-child(2) > a"),
+            "category": safe_text("select:span:nth-child(3) > a"),
+            "duration": safe_text(("span", {"itemprop": "duration"})),
+            "description": safe_text(("p", {"class": "movie-description"})),
+            "video": link[0]["href"] if link else ""
+        })
+
+        return result
+
