@@ -5,8 +5,8 @@ from src.routers import home
 
 app = FastAPI(
     version="1.0", 
-    title="ComandoPlay API", 
-    description="API REST de Catálogo de Filmes/Séries (com autenticação)"
+    title="Filmes online API", 
+    description="API REST de Catálogo de Filmes/Séries (com autenticação)",
 )
 
 # Iniciar as Rotas
