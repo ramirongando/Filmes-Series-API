@@ -112,20 +112,31 @@ class AssistirBiz(ComandoPlay):
         
         for item in itens:
             try:
-                title = item.find("h3", attrs={"class": "card__title"}).text.strip()
-                category = item.select("span > a:nth-child(1)")[0].text.strip()
-                serie_data = item.select("span > a:nth-child(2)")[0].text.strip()
-                rank = item.find("span", attrs={"class": "card__rate"}).text.strip()
-                link = item.select("div.card__cover > a")[0]["href"]
+                title = item.find("h3", attrs={"class": "card__title"})
+                category_sel = item.select("span > a:nth-child(1)")
+                serie_data_sel = item.select("span > a:nth-child(2)")
+                rank = item.find("span", attrs={"class": "card__rate"})
+                link_sel = item.select("div.card__cover > a")
+                img_tag = item.find("img")
+
+                title = title.text.strip() if title else ""
+                category = category_sel[0].text.strip() if len(category_sel) > 0 else ""
+                serie_data = serie_data_sel[0].text.strip() if len(serie_data_sel) > 0 else ""
+                rank = rank.text.strip() if rank else ""
+                link = link_sel[0]["href"] if len(link_sel) > 0 and "href" in link_sel[0].attrs else ""
+
                 img_tag = item.find("img")
                 image = img_tag.get("src", "")
                 if not image or "poster_default" in image or "_filter(blur)" in image:
                     image = img_tag.get("data-src", "https://assistir.biz/assets/img/poster_default.jpg")
 
                 result.append({
-                    "title": title, "data-serie": serie_data, 
-                    "category": category, "link": link, 
-                    "image": image, "rank": rank
+                    "title": title,
+                    "data-serie": serie_data,
+                    "category": category,
+                    "link": link,
+                    "image": image,
+                    "rank": rank
                 })
 
             except AttributeError:
@@ -135,4 +146,62 @@ class AssistirBiz(ComandoPlay):
         self.series = result.copy()
         return result
 
+    def extract_serie(self, html: BeautifulSoup) -> list:
+        soup = html
+        result = []
 
+        card = soup.find("div", attrs={"class": "card card--details card--series"})
+        
+        title = soup.find("h1", attrs={"class": "section__title"})
+        title = title.text.strip() if title else ""
+
+        category = card.select_one("div > ul > li:nth-child(1) > a")
+        category = category.text.strip() if category else ""
+
+        serie_data = card.select_one("div > ul > li:nth-child(2)")
+        serie_data = serie_data.text.strip().split(":")[-1].strip() if serie_data else ""
+
+        status = card.select_one("div > ul > li:nth-child(5) > span")
+        status = status.text.strip() if status else ""
+
+        description_tag = card.select_one("div.card__description.card__description--details")
+        description = description_tag.text.strip() if description_tag else ""
+
+        img_tag = card.find("img")
+        image = img_tag.get("src", "") if img_tag else ""
+        if not image or "poster_default" in image or "_filter(blur)" in image:
+            image = img_tag.get("data-src", "https://assistir.biz/assets/img/poster_default.jpg") if img_tag else "https://assistir.biz/assets/img/poster_default.jpg"
+
+        # Extrair temporadas
+        temporadas = soup.select("section.section.section--details > div > div > div.container > div > div")
+
+        temporadas_result = []
+        for index, temporada in enumerate(temporadas):
+            if index != 0:
+                name = temporada.find("div", attrs={"class": "card__content"}).text.strip()
+                link_sel = temporada.select("div.card__cover > a")
+                link = link_sel[0]["href"] if len(link_sel) > 0 and "href" in link_sel[0].attrs else ""
+
+                _tag = temporada.find("img")
+                img = _tag.get("src", "") if _tag else ""
+                if not img or "poster_default" in img or "_filter(blur)" in img:
+                    img = _tag.get("data-src", "https://assistir.biz/assets/img/poster_default.jpg") if _tag else "https://assistir.biz/assets/img/poster_default.jpg"
+
+
+                temporadas_result.append({
+                    "season": name,
+                    "image": img,
+                    "link": link
+                })
+
+        result.append({
+            "title": title,
+            "data": serie_data,
+            "status": status,
+            "category": category,
+            "image": image,
+            "description": description,
+            "seasons": temporadas_result
+        })
+
+        return result
