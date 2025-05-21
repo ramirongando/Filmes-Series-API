@@ -12,12 +12,12 @@ app = FastAPI(
 )
 
 # Iniciar as Rotas
-app.include_router(home.router, prefix="/api", tags=["FILMES"]),
-app.include_router(series.router, prefix="/api", tags=["SERIES"])
+app.include_router(home.router, prefix="/api", tags=["Rotas para FILMES"]),
+app.include_router(series.router, prefix="/api", tags=["Rotas para SERIES"])
 
 @app.get("/")
 async def root():
-    return {"message": "Bem-vindo à API do ComandoPlay!"}
+    return {"message": "Bem-vindo à API está online! : )"}
 
 if __name__ == "__main__":
     os.system("cls" if os.name == "nt" else "clear")
