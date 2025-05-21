@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
 
-from src.config.config import HEADERS
+from src.config.config import URL_S, URL_PLAY, IMG
 
 
 
@@ -19,7 +19,7 @@ class ComandoPlay:
         self.filmes = list()
         self.series = list()
         self.deal = requests.Session()
-        self.deal.headers = HEADERS
+        self.deal.headers.update({"user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"})
 
     @staticmethod
     def soup(content: str) -> BeautifulSoup:
@@ -49,7 +49,7 @@ class ComandoPlay:
         for item in itens:
             try:
                 image = item.find("img")["data-src"]
-                link = urlparse(item.find("a")["href"]).path # # Extrai o caminho da URL
+                link = urlparse(item.find("a")["href"]).path # Extrai o caminho da URL
                 genero = item.find("span", attrs={"class":"genre"}).text.strip()
                 title = item.find("h2", attrs={"class":"movie-title"}).text.strip()
                 rank = item.find("div", attrs={"class":"imdb-rating"}).text.strip()
@@ -100,7 +100,28 @@ class ComandoPlay:
         return result
 
 
-class AssistirBiz(ComandoPlay):
+class AssistirBiz:
+    def __init__(self):
+        self.series = list()
+        self.deal = requests.Session()
+        self.deal.headers.update({"upgrade-insecure-requests": "1", "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"})
+
+    @staticmethod
+    def soup(content: str) -> BeautifulSoup:
+        """Retorna um objeto BeautifulSoup para análise do HTML"""
+        return BeautifulSoup(content, "html.parser")
+
+    # region - Requests Server
+    def fetch_page(self, url: str, params: dict=None) -> Optional[str]:
+        """Faz requisição para a página e retorna o HTML se bem sucedida"""
+        try:
+            response = self.deal.get(url, params=params)
+            response.raise_for_status()
+            return response.text
+        except requests.RequestException as error:
+            # print(f"[!] Erro ao acessar {url}: {error}")
+            return None
+
     def extract_series(self, html: BeautifulSoup) -> list:
         """Extrai informações de séries da página HTML"""
         result = []
@@ -128,7 +149,7 @@ class AssistirBiz(ComandoPlay):
                 img_tag = item.find("img")
                 image = img_tag.get("src", "")
                 if not image or "poster_default" in image or "_filter(blur)" in image:
-                    image = img_tag.get("data-src", "https://assistir.biz/assets/img/poster_default.jpg")
+                    image = img_tag.get("data-src", IMG)
 
                 result.append({
                     "title": title,
@@ -140,13 +161,13 @@ class AssistirBiz(ComandoPlay):
                 })
 
             except AttributeError:
-                print("[EXCEPT] Erro ao extrair informações de um item.")
+                # print("[EXCEPT] Erro ao extrair informações de um item.")
                 continue
 
         self.series = result.copy()
         return result
 
-    def extract_serie(self, html: BeautifulSoup) -> list:
+    def extract_temporadas(self, html: BeautifulSoup) -> list:
         soup = html
         result = []
 
@@ -170,7 +191,7 @@ class AssistirBiz(ComandoPlay):
         img_tag = card.find("img")
         image = img_tag.get("src", "") if img_tag else ""
         if not image or "poster_default" in image or "_filter(blur)" in image:
-            image = img_tag.get("data-src", "https://assistir.biz/assets/img/poster_default.jpg") if img_tag else "https://assistir.biz/assets/img/poster_default.jpg"
+            image = img_tag.get("data-src", IMG)
 
         # Extrair temporadas
         temporadas = soup.select("section.section.section--details > div > div > div.container > div > div")
@@ -185,7 +206,7 @@ class AssistirBiz(ComandoPlay):
                 _tag = temporada.find("img")
                 img = _tag.get("src", "") if _tag else ""
                 if not img or "poster_default" in img or "_filter(blur)" in img:
-                    img = _tag.get("data-src", "https://assistir.biz/assets/img/poster_default.jpg") if _tag else "https://assistir.biz/assets/img/poster_default.jpg"
+                    img = _tag.get("data-src", IMG)
 
 
                 temporadas_result.append({
@@ -201,7 +222,40 @@ class AssistirBiz(ComandoPlay):
             "category": category,
             "image": image,
             "description": description,
-            "seasons": temporadas_result
+            "seasons": temporadas_result,
+            "total": index
         })
 
         return result
+
+    def extract_episodes(self, html: BeautifulSoup) -> list:
+        soup = html
+        epsodios_result= []
+        
+        for tr in soup.select("tr[onclick*='reloadVideoSerie(']"):
+            onclick = tr.get("onclick", "reloadVideoSerie(2837, 'f576078a6d201711ba4834c58f138b20')")
+            id_video = onclick.split(",")[0].split("(")[1].strip()
+
+            ths = tr.find_all("th")
+            pos = ths[0].text.strip() if len(ths) > 0 else ""
+            titulo = ths[-1].text.strip() if len(ths) > 1 else ""
+
+            epsodios_result.append({"title": titulo, "pos": pos, "id_video": id_video})
+
+        return epsodios_result
+
+    def get_ep_link_video(self, id_video):
+        """Busca o link do vídeo de uma série pelo ID."""
+        url = f"{URL_S}/getepisodio"
+        data = {"id": id_video}
+        headers = {"origin": URL_S, "x-requested-with": "XMLHttpRequest","content-type": "application/x-www-form-urlencoded; charset=UTF-8"}
+
+        try:
+            res = self.deal.post(url, data=data, headers=headers)
+            if "tá fazendo o quê aqui?" in res.text:
+                return [{"error": "não achou o link"}]
+            json_data = res.json()
+            link = f"{URL_PLAY}/{id_video}/{json_data['token']}"
+            return link
+        except Exception as e:
+            return [{"error": str(e)}]
