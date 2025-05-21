@@ -6,7 +6,7 @@ API REST para catálogo de filmes e séries, construída com **FastAPI**, que re
 
 - 📄 Listar filmes da página inicial (com paginação)
 - 🔍 Buscar detalhes de um filme por link
-- 📺 Listar séries (em breve)
+- 📺 Listar séries
 - 🚀 Rota raiz com mensagem de boas-vindas (`/`)
 - 🔧 Projeto modular com separação por routers e controllers
 
@@ -52,11 +52,26 @@ python main.py
 
 ## 📫 Endpoints
 
-| Método | Rota                    | Descrição                             |
-|--------|-------------------------|---------------------------------------|
-| GET    | `/`                     | Mensagem de boas-vindas               |
-| GET    | `/api/movies?page=1`    | Lista filmes da página inicial        |
-| GET    | `/api/video/{link}`     | Busca detalhes de um filme pelo link  |
+| Método | Rota                                  | Descrição                                                                 |
+|--------|---------------------------------------|---------------------------------------------------------------------------|
+| GET    | `/`                                   | Mensagem de boas-vindas                                                   |
+| GET    | `/api/movies?page=1`                  | Lista os filmes da página inicial (com paginação)                        |
+| GET    | `/api/video/{link}`                   | Busca os detalhes de um **filme** pelo link                              |
+| GET    | `/api/series`                         | Lista todas as **séries** disponíveis                                     |
+| GET    | `/api/temporadas/{serie}`             | Busca os detalhes de uma **série** e as **temporadas**.   |
+| GET    | `/api/episodios/{temporada}`          | Lista os **episódios** de uma temporada                                  |
+| POST    | `/api/video/{id_video}`               | Retorna o link do **vídeo** de um episódio por ID                        |
+
+---
+
+### 🔐 Proteção de Rotas
+
+Algumas rotas da API são protegidas com um **cabeçalho personalizado** chamado `ngando`.  
+Para ter acesso autorizado, a requisição deve conter:
+
+```http
+ngando: ramirongando.ngando920.ramirodev
+```
 
 ---
 
