@@ -1,19 +1,19 @@
 
 from fastapi import Path
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
-from src.controllers.scraper import AssistirBiz, debug
-from src.config.config import U_SERIES, URL_SERIES
+from src.security.auth import autorisation
+from src.controllers.scraper import AssistirBiz
+from src.config.config import URL_S, URL_SERIES
 
 
 router = APIRouter()
 scraper = AssistirBiz()
-scraper.deal.headers.update({"upgrade-insecure-requests": "1"})
 
-@router.get("/series", status_code=200)
-def get_series():
-    """Busca os Séries na página Series."""
+@router.get("/series", dependencies=[Depends(autorisation)], status_code=200)
+def fetch_all_series():
+    """Retorna uma lista todas as séries disponíveis."""
     url = f"{URL_SERIES}"
     res = scraper.fetch_page(url)
     if not res:
@@ -30,21 +30,51 @@ def get_series():
         }
     )
 
-@router.get("/serie/{link:path}", status_code=200)
-def serie(link: str = Path(...)):
-    """Buscar um série pelo link"""
-    url = f"{U_SERIES}{link}"
+@router.get("/temporadas/{serie:path}", dependencies=[Depends(autorisation)], status_code=200)
+def fetch_a_serie(serie: str = Path(...)):
+    """Busca os detalhes de uma série e as temporadas."""
+    url = f"{URL_S}{serie}"
     res = scraper.fetch_page(url)
     if not res:
         return JSONResponse(
             content={"error": "invalid request"}, status_code=443
         )
-    debug(res)
+
     html = scraper.soup(res)
-    data = scraper.extract_serie(html)
+    episodios = scraper.extract_temporadas(html)
     return JSONResponse(
         content={
             "status": True, 
-            "seriee": data
+            "serie-data": episodios,
         }
     )
+
+@router.get("/episodios/{temporada:path}", dependencies=[Depends(autorisation)], status_code=200)
+def catch_episodes(temporada: str = Path(...)):
+    """Lista os episódios de uma temporada"""
+    url = f"{URL_S}{temporada}"
+    res = scraper.fetch_page(url)
+    if not res:
+        return JSONResponse(
+            content={"error": "invalid request"}, status_code=443
+        )
+    
+    html = scraper.soup(res)
+    episodios = scraper.extract_episodes(html)
+    return JSONResponse(
+        content={
+            "status": True, 
+            "episodios": episodios,
+            "total":len(episodios)
+        }
+    )
+
+@router.post("/video/{id_video:path}", dependencies=[Depends(autorisation)], status_code=200)
+def video(id_video: str = Path(...)):
+    """Retorna o link do vídeo de um episódio por ID"""
+    res = scraper.get_ep_link_video(id_video)
+    if "error" in res[0]:
+        return JSONResponse(
+            content={"error": "invalid request"}, status_code=443
+        )
+    return JSONResponse(content={"video": res})
