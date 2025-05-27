@@ -4,13 +4,13 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
 from src.security.auth import autorisation
-from src.controllers.scraper import ComandoPlay
+from src.controllers.scraper import FilmesScraper
 from src.config.config import URL_BASE, URL_MOVIES
 
 
 
 router = APIRouter()
-scraper = ComandoPlay()
+scraper = FilmesScraper()
 
 @router.get("/movies", dependencies=[Depends(autorisation)], status_code=200)
 async def get_home(page: int = 1):

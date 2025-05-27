@@ -14,7 +14,7 @@ def debug(content):
         file.write(content)
         file.close()
 
-class ComandoPlay:
+class FilmesScraper:
     def __init__(self):
         self.filmes = list()
         self.series = list()
@@ -54,7 +54,7 @@ class ComandoPlay:
         return result
 
 
-class AssistirBiz:
+class SeriesScraper:
     def __init__(self):
         self.series = list()
         self.deal = requests.Session()
